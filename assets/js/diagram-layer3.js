@@ -2771,9 +2771,9 @@ const Diagram = function() {
           <div class="button detach">
             <a onclick="openWindow('DiagramDetach.html',1000,600)">Detach</a>
           </div>
-          <div class="groupings-toggle">
+          <div class="ip-toggle">
             <input type="checkbox" />
-            <label class="label">Grouping</label>
+            <label class="label">Show IP Address</label>
           </div>
           <svg class="reset button">
             <g>
@@ -2792,10 +2792,13 @@ const Diagram = function() {
         toolbar.querySelector(".button.visio-export").addEventListener("click", () => doVisioExport(diagram))
         toolbar.querySelector(".button.reset").addEventListener("click", () => reset(diagram))
         toolbar.querySelector(".button.search").addEventListener("click", () => this.searchForm.search(diagram, searchFormInput.value))
+        settings.grouping = true;
 
-        const groupingToggle = toolbar.querySelector(".groupings-toggle input")
-        groupingToggle.checked = settings.grouping
-        groupingToggle.addEventListener("click", () => Grouping.toggle(diagram))
+        console.log('settings.grouping', settings.showIpAddress);
+
+        const ipAddressToggle = toolbar.querySelector(".ip-toggle input");
+        ipAddressToggle.checked = settings.showIpAddress;
+        // ipAddressToggle.addEventListener("click", () => Grouping.toggle(diagram))
 
         this.searchForm.autocompleteSetup(diagram, searchFormInput, autocompleteItems)
         this.styleModeButtons(diagram)
@@ -2825,6 +2828,9 @@ const Diagram = function() {
       const dom = diagram.dom = {}
 
       dom.container = d3.select(container).classed("diagram", true).classed("widget-mode", Utils.isWidget())
+      console.log('create 2831', {
+        diagram, container
+      });
       dom.container.append(() => this.toolbar.create(diagram))
       dom.visContainer = dom.container.append("div")
         .style("position", "relative")
@@ -2974,6 +2980,9 @@ const Diagram = function() {
       Data.process(layer, await data)
 
       // then we set the graphics
+      console.log('Graphics.create 2983', {
+        diagram, layer
+      });
       Graphics.create(diagram, layer)
 
       if (!first) {
@@ -3186,14 +3195,15 @@ const Diagram = function() {
     }
     diagram.settings = Object.assign({
       toolbar: false,
-      grouping: Store.get(diagram, "grouping") !== "false",
+      grouping: true,
       floatMode: true,
       groupPadding: 75,
       groupBorderWidth: 10,
       zoomInMult: 1.25,
       zoomOutMult: 0.8,
       maxZoomIn: 8,
-      maxZoomOut: 0.1
+      maxZoomOut: 0.1,
+      showIpAddress: false
     }, settings)
 
     UI.create(diagram, container)

@@ -210,10 +210,10 @@
   font-size: 11px;
   cursor: pointer;
 }
-.diagram .groupings-toggle input {
+.diagram .ip-toggle input {
   vertical-align: middle;
 }
-.diagram .groupings-toggle .label {
+.diagram .ip-toggle .label {
   font-weight: normal;
   font-size: 11px;
 }
