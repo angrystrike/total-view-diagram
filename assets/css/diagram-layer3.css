@@ -1,0 +1,223 @@
+.diagram {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.diagram div.tooltip {
+    position: absolute;
+    text-align: left;
+    padding: 2px;
+    font: 12px sans-serif;
+    background: black;
+    border: 0px;
+    border-radius: 8px;
+    color: white;
+}
+
+.diagram .grabbable {
+    cursor: move; /* fallback if grab cursor is unsupported */
+    cursor: grab;
+    cursor: -moz-grab;
+    cursor: -webkit-grab;
+}
+
+/* (Optional) Apply a "closed-hand" cursor during drag operation. */
+.diagram .grabbable:active {
+    cursor: grabbing;
+    cursor: -moz-grabbing;
+    cursor: -webkit-grabbing;
+}
+
+.diagram .main-svg {
+    flex-grow: 1;
+}
+
+.diagram .toolbar {
+  position: relative;
+}
+.diagram.widget-mode .toolbar {
+  padding-right: 20px;
+}
+
+.diagram .toolbar > * {
+  margin-bottom: 5px !important;
+}
+
+.diagram .toolbar > *:not(:first-child) {
+  margin: 0 8px;
+}
+
+.diagram .toolbar .button {
+  cursor: pointer;
+}
+
+.diagram .toolbar svg {
+  background: var(--bg-main,#fff);
+  height: 20px;
+  width: 38px;
+  overflow: visible;
+  vertical-align: top;
+  transform: translate(0px, 0.5px);
+}
+
+.diagram .toolbar > div {
+  display: inline-block;
+}
+
+.diagram .visio-export {
+  margin-top: -1px !important;
+}
+.diagram .visio-export img {
+  height: 24px;
+  width: 26px;
+}
+
+.diagram .search-form {
+  display: inline-block;
+  vertical-align: top;
+  width: 350px;
+}
+
+.diagram .search-form .autocomplete {
+  /*the container must be positioned relative:*/
+  position: relative;
+  display: inline-block;
+  height: 21px;
+  width: calc(100% - 50px);
+  vertical-align: top;
+}
+
+.diagram .search-form input {
+  background-color: #eee;
+  padding: 2px;
+  font-size: 12px;
+  width: 100%;
+  border: 1px solid #d4d4d4;
+  height: 21px;
+  line-height: inherit;
+  vertical-align: top;
+}
+
+.diagram .autocomplete-items {
+  position: absolute;
+  border: 1px solid #d4d4d4;
+  border-bottom: none;
+  border-top: none;
+  z-index: 99;
+  /*position the autocomplete items to be the same width as the container:*/
+  top: 100%;
+  left: 0;
+  right: 0;
+}
+.diagram .autocomplete-items div {
+  padding: 10px;
+  cursor: pointer;
+  background-color: #fff;
+  border-bottom: 1px solid #d4d4d4;
+}
+.diagram .autocomplete-items div:hover {
+  /*when hovering an item:*/
+  background-color: #e9e9e9;
+}
+.diagram .autocomplete-active {
+  /*when navigating through the items using the arrow keys:*/
+  background-color: rgb(33,150,243) !important;
+  color: #ffffff;
+}
+
+.diagram .button.search {
+  margin-left: 5px;
+}
+
+.diagram g.zoom-controls {
+    cursor: pointer;
+    pointer-events: all;
+    /* transform: translate(60px, 0.5px); */
+}
+.diagram .zoom-controls rect {
+    fill: white;
+    stroke: #596877;
+    stroke-width: 1;
+}
+.diagram .zoom-controls line {
+    stroke: #596877;
+    stroke-width: 1.5;
+}
+
+.diagram .zoom-out {
+    transform: translate(19px, 0px);
+}
+
+.diagram .button {
+    fill: white;
+    stroke: #596877;
+}
+
+.diagram svg.mode-toggle {
+    width: 60px;
+}
+
+.diagram .button-label {
+    stroke: none;
+    fill: #596877;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 9px;
+}
+
+.diagram g {
+    cursor: pointer;
+}
+
+.diagram svg {
+    background: #eee;
+    overflow: hidden;
+}
+
+.diagram .loader {
+    position: absolute;
+    left: 50%;
+    bottom: 50%;
+    z-index: 1;
+    width: 32px;
+    height: 32px;
+    margin: -75px 0 0 -75px;
+    border: 3px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 3px solid rgb(33,150,243);
+    -webkit-animation: spin 2s linear infinite;
+    animation: spin 2s linear infinite;
+}
+
+/* Safari */
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.diagram .button.lock {
+  transform: translate(30px)
+}
+
+.diagram .detach {
+  font-size: 11px;
+  cursor: pointer;
+}
+.diagram .groupings-toggle input {
+  vertical-align: middle;
+}
+.diagram .groupings-toggle .label {
+  font-weight: normal;
+  font-size: 11px;
+}
+
+.diagram .reset {
+  float: right;
+}
