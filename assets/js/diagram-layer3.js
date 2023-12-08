@@ -558,6 +558,25 @@ const Diagram = function() {
     }
   }
 
+  const IpAddress = {
+    init(diagram, layer) {
+
+    },
+
+    setup({ settings, graphics, simulations }) {
+      
+    },
+
+    toggle(diagram) {
+      const { settings, nodes, simulations, groups } = diagram
+
+      settings.showIpAddress = !settings.showIpAddress;
+
+      console.log('toggle', settings.showIpAddress);
+      Store.set(diagram, "showIpAddress", settings.showIpAddress.toString())
+    }
+  };
+
   const Simulations = {
     forces: {
       cluster({ settings, groups }) {
@@ -2775,12 +2794,17 @@ const Diagram = function() {
             <input type="checkbox" />
             <label class="label">Show IP Address</label>
           </div>
+          <div class="groupings-toggle">
+            <input type="checkbox" />
+            <label class="label">Groupings</label>
+          </div>
           <svg class="reset button">
             <g>
               <rect height="100%" width="30px"></rect>
               <text class="button-label" x="3" y="13">Reset</text>
             </g>
           </svg>
+          <div class="help">&lt;SHIFT&gt;+click on an element to interact</div>
         `
 
         const searchFormInput = toolbar.querySelector(".search-form input")
@@ -2792,13 +2816,14 @@ const Diagram = function() {
         toolbar.querySelector(".button.visio-export").addEventListener("click", () => doVisioExport(diagram))
         toolbar.querySelector(".button.reset").addEventListener("click", () => reset(diagram))
         toolbar.querySelector(".button.search").addEventListener("click", () => this.searchForm.search(diagram, searchFormInput.value))
-        settings.grouping = true;
-
-        console.log('settings.grouping', settings.showIpAddress);
+        
+        const groupingToggle = toolbar.querySelector(".groupings-toggle input")
+        groupingToggle.checked = settings.grouping
+        groupingToggle.addEventListener("click", () => Grouping.toggle(diagram))
 
         const ipAddressToggle = toolbar.querySelector(".ip-toggle input");
         ipAddressToggle.checked = settings.showIpAddress;
-        // ipAddressToggle.addEventListener("click", () => Grouping.toggle(diagram))
+        ipAddressToggle.addEventListener("click", () => IpAddress.toggle(diagram))
 
         this.searchForm.autocompleteSetup(diagram, searchFormInput, autocompleteItems)
         this.styleModeButtons(diagram)
@@ -3131,7 +3156,7 @@ const Diagram = function() {
   }
 
   function updateSettings(diagram, newSettings) {
-    const flags = ["toolbar", "grouping", "floatMode"],
+    const flags = ["toolbar", "grouping", "floatMode", 'showIpAddress'],
           { settings } = diagram
     let zoomParametersChanged = false
 
@@ -3150,6 +3175,9 @@ const Diagram = function() {
           case "grouping":
             Grouping.toggle(diagram)
             break
+          case 'showIpAddress':
+            IpAddress.toggle(diagram);
+            break;
           case "floatMode":
             toggleFloatMode()
             break
@@ -3195,7 +3223,8 @@ const Diagram = function() {
     }
     diagram.settings = Object.assign({
       toolbar: false,
-      grouping: true,
+      grouping: Store.get(diagram, "grouping") !== "false",
+      showIpAddress: Store.get(diagram, "showIpAddress") !== 'false',
       floatMode: true,
       groupPadding: 75,
       groupBorderWidth: 10,
@@ -3203,7 +3232,6 @@ const Diagram = function() {
       zoomOutMult: 0.8,
       maxZoomIn: 8,
       maxZoomOut: 0.1,
-      showIpAddress: false
     }, settings)
 
     UI.create(diagram, container)
@@ -3211,6 +3239,7 @@ const Diagram = function() {
     layer.processing = false
     Simulations.init(diagram, layer)
     Grouping.init(diagram, layer)
+    IpAddress.init(diagram, layer)
     Layout.restore(diagram, layer)
     Zoom.restore(diagram, layer)
 
@@ -3220,7 +3249,8 @@ const Diagram = function() {
       doVisioExport: () => doVisioExport(diagram),
       updateSettings: (newSettings) => updateSettings(diagram, newSettings),
       toggleFloatMode: () => toggleFloatMode(diagram),
-      toggleGrouping: () => Grouping.toggle(diagram),
+      // toggleGrouping: () => Grouping.toggle(diagram),
+      toggleIpAddress: () => IpAddress.toggle(diagram),
       toggleToolbar: () => UI.toolbar.toggle(diagram)
     }
   }

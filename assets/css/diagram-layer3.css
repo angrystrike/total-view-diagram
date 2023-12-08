@@ -218,6 +218,19 @@
   font-size: 11px;
 }
 
+.diagram .groupings-toggle input {
+  vertical-align: middle;
+}
+.diagram .groupings-toggle .label {
+  font-weight: normal;
+  font-size: 11px;
+}
+
 .diagram .reset {
   float: right;
+}
+
+.help {
+  float: right;
+  margin-top: 2px !important;
 }
