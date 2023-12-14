@@ -467,12 +467,14 @@ const Diagram = function() {
       }
     },
     box({ settings }, containers) {
+      console.log('containers', containers, settings);
+
       return containers.append("rect")
         .attr("class", "group-rect")
         .attr("stroke", "#83bad6")
         .attr("stroke-width", settings.groupBorderWidth)
         .attr("rx", 15)
-        .attr("fill", "transparent")
+        .attr("fill", "#99d9ea")
         .attr("opacity", 1)
     },
     closeButton(diagram, containers) {
@@ -551,6 +553,7 @@ const Diagram = function() {
         .on("click", d => {
           if (d3.event.shiftKey) this.focus(diagram, d)
         })
+        
       graphics.groupCloseBtn = this.closeButton(diagram, dom.groupsContainer)
         .attr("style", "display: none")
 
@@ -560,20 +563,41 @@ const Diagram = function() {
 
   const IpAddress = {
     init(diagram, layer) {
+      layer.dom.svg.selectAll('text')
+        .each(function(d) {
+          let isDevice = d.url && d.url.length > 0;
+          if (isDevice) {
+            const existingText = d3.select(this);
+            const bbox = existingText.node().getBBox();
 
-    },
+            const newX = bbox.x;
+            const newY = bbox.y + bbox.height + 15; 
 
-    setup({ settings, graphics, simulations }) {
-      
+            let newText = d3.select(this.parentNode)
+              .append('text')
+              .text(d.ipAddress)
+              .attr('x', newX)
+              .attr('y', newY)
+              .attr('font-size', '16px')
+              .attr('class', 'ip-address');
+
+            const newTextWidth = newText.node().getBBox().width;
+            newText.attr('x', newX + (bbox.width - newTextWidth) / 2);
+            newText.style('visibility', diagram.settings.showIpAddress ? 'visible' : 'hidden');
+          }
+        });
     },
 
     toggle(diagram) {
-      const { settings, nodes, simulations, groups } = diagram
+      const { settings } = diagram
 
+      let layer = diagram.layers[0].dom.svg;
       settings.showIpAddress = !settings.showIpAddress;
 
-      console.log('toggle', settings.showIpAddress);
-      Store.set(diagram, "showIpAddress", settings.showIpAddress.toString())
+      layer.selectAll('.ip-address')
+        .style('visibility', diagram.settings.showIpAddress ? 'visible' : 'hidden');
+
+        Store.set(diagram, "showIpAddress", settings.showIpAddress.toString())
     }
   };
 
@@ -900,22 +924,22 @@ const Diagram = function() {
          * @param {Event} event
          * @returns void
          */
-        const showTooltipAt = _.throttle((target, event) => {
-            const containerOffset = dom.container.node().getBoundingClientRect()
-            let left = -containerOffset.left
-            let top = 0
-            if (target === 'target') {
-                const pos = event.target.getBoundingClientRect()
-                left += pos.left + pos.width
-                top += pos.top
-            }
-            if (target === 'coords') {
-                left += event.pageX + 10
-                top += event.pageY
-            }
-            top += settings.toolbar ? -10 : 10
-            dom.tooltipDiv.style('left', `${left}px`).style('top', `${top}px`)
-        }, 50, { trailing: false })
+      const showTooltipAt = _.throttle((target, event) => {
+          const containerOffset = dom.container.node().getBoundingClientRect()
+          let left = -containerOffset.left
+          let top = 0
+          if (target === 'target') {
+              const pos = event.target.getBoundingClientRect()
+              left += pos.left + pos.width
+              top += pos.top
+          }
+          if (target === 'coords') {
+              left += event.pageX + 10
+              top += event.pageY
+          }
+          top += settings.toolbar ? -10 : 10
+          dom.tooltipDiv.style('left', `${left}px`).style('top', `${top}px`)
+      }, 50, { trailing: false })
 
       //controls all link drawing and formatting
       graphics.links = layer.dom.layerContainer.selectAll("line")
@@ -963,7 +987,8 @@ const Diagram = function() {
         .enter().append("g")
         .on("mouseover", function(d) {
           // only show tooltips for the current layer
-            const parts = []
+          const parts = []
+
 
           dom.tooltipDiv.transition()
             .duration(200)
@@ -998,13 +1023,16 @@ const Diagram = function() {
           if (Utils.inInteractMode()) Layers.drillDown.do(diagram, d)
         })
         .call(Simulations.drag(diagram, layer))
+        
 
       //circle for node
       graphics.nodes.append("circle")
+        .attr('class', '1231')
         .attr("r", 0)
         .attr("stroke", "grey")
         .attr("stroke-width", "1px")
         .attr("fill", "#eee")
+        .style('display', 'none')
 
       //attach image to node
       graphics.nodes.append("image")
@@ -2794,10 +2822,6 @@ const Diagram = function() {
             <input type="checkbox" />
             <label class="label">Show IP Address</label>
           </div>
-          <div class="groupings-toggle">
-            <input type="checkbox" />
-            <label class="label">Groupings</label>
-          </div>
           <svg class="reset button">
             <g>
               <rect height="100%" width="30px"></rect>
@@ -2817,9 +2841,9 @@ const Diagram = function() {
         toolbar.querySelector(".button.reset").addEventListener("click", () => reset(diagram))
         toolbar.querySelector(".button.search").addEventListener("click", () => this.searchForm.search(diagram, searchFormInput.value))
         
-        const groupingToggle = toolbar.querySelector(".groupings-toggle input")
-        groupingToggle.checked = settings.grouping
-        groupingToggle.addEventListener("click", () => Grouping.toggle(diagram))
+        // const groupingToggle = toolbar.querySelector(".groupings-toggle input")
+        // groupingToggle.checked = settings.grouping
+        // groupingToggle.addEventListener("click", () => Grouping.toggle(diagram))
 
         const ipAddressToggle = toolbar.querySelector(".ip-toggle input");
         ipAddressToggle.checked = settings.showIpAddress;
@@ -2853,9 +2877,6 @@ const Diagram = function() {
       const dom = diagram.dom = {}
 
       dom.container = d3.select(container).classed("diagram", true).classed("widget-mode", Utils.isWidget())
-      console.log('create 2831', {
-        diagram, container
-      });
       dom.container.append(() => this.toolbar.create(diagram))
       dom.visContainer = dom.container.append("div")
         .style("position", "relative")
@@ -2972,6 +2993,7 @@ const Diagram = function() {
         Grouping.box(diagram, layer.dom.svg)
           .attr("x", 5)
           .attr("y", 5)
+          .attr('class', 'test')
           .style("width", "calc(100% - 10px)")
           .style("height", "calc(100% - 10px)")
           .attr("fill", "#eee")
@@ -3004,10 +3026,6 @@ const Diagram = function() {
       // then we wait for and parse the data
       Data.process(layer, await data)
 
-      // then we set the graphics
-      console.log('Graphics.create 2983', {
-        diagram, layer
-      });
       Graphics.create(diagram, layer)
 
       if (!first) {
@@ -3235,7 +3253,8 @@ const Diagram = function() {
     }, settings)
 
     UI.create(diagram, container)
-    const layer = await Layers.push("main", diagram, Data.fetch("api/diagramlayer3.json"))
+    const layer = await Layers.push("main", diagram, Data.fetch("api/diagramlayer3.json"));
+
     layer.processing = false
     Simulations.init(diagram, layer)
     Grouping.init(diagram, layer)
