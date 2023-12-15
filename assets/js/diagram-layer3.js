@@ -423,12 +423,20 @@ const Diagram = function() {
       diagram.focusedGroup = groupId
       const group = diagram.groups[groupId]
 
+      const rect = d3.select(diagram.currentLayer.graphics.groupRect._groups[0][groupId]);
+      rect.attr('fill', 'transparent');
+      
+      let groupImage = diagram.currentLayer.dom.svg.selectAll('.image_' + groupId);
+      groupImage.style('display', 'none')
+
       diagram.graphics.groupCloseBtn
         .attr("x", group.x + group.width - 20)
         .attr("y", group.y - 10)
         .attr("style", "display: block")
         .on("click", () => {
-          this.unfocus(diagram, { k: 0.25 })
+          this.unfocus(diagram, { k: 0.25 });
+          groupImage.style('display', 'inline')
+          rect.attr('fill', '#99d9ea');
         })
 
       Zoom.focusOnArea(diagram, group)
@@ -547,6 +555,9 @@ const Diagram = function() {
             Layout.save(diagram)
           })
         )
+        .on("click", d => {
+          if (d3.event.shiftKey) this.focus(diagram, d)
+        })
       graphics.groupTexts = graphics.groupContainers
         .append("text")
         .text(d => groups[d].name)
@@ -780,24 +791,6 @@ const Diagram = function() {
           .alphaTarget(0)
           .on("tick", function() {
             Graphics.update(layer);
-
-            diagram.graphics.groupRect._groups[0].forEach(function (d, index) {
-              let rectBBox = d.getBBox();
-              let rectX = rectBBox.x + rectBBox.width / 2;
-              let rectY = rectBBox.y + rectBBox.height / 2;
-              let parentContainer = d3.select(d.parentNode);
-              let image = 'image_' + index
-              parentContainer.selectAll('.' + image).remove();
-
-              parentContainer
-                .append('image')
-                .attr("class", image)
-                .attr("xlink:href", 'assets/Graphics/Router.png')
-                .attr("x", rectX - 50) 
-                .attr("y", rectY - 50)
-                .attr("width", 100)
-                .attr("height", 100);
-            });
           });
 
         return simulation;
@@ -935,6 +928,24 @@ const Diagram = function() {
         .attr("x2", d => d.target.x)
         .attr("y2", d => d.target.y)
       graphics.nodes.attr("transform", d => `translate(${d.x}, ${d.y})`)
+
+      graphics.groupRect._groups[0].forEach(function (d, index) {
+        let rectBBox = d.getBBox();
+        let rectX = rectBBox.x + rectBBox.width / 2;
+        let rectY = rectBBox.y + rectBBox.height / 2;
+        let parentContainer = d3.select(d.parentNode);
+        let image = 'image_' + index
+        parentContainer.selectAll('.' + image).remove();
+
+        parentContainer
+          .append('image')
+          .attr("class", image)
+          .attr("xlink:href", 'assets/Graphics/Router.png')
+          .attr("x", rectX - 50) 
+          .attr("y", rectY - 50)
+          .attr("width", 100)
+          .attr("height", 100);
+      });
     },
     create(diagram, layer) {
       const graphics = diagram.graphics = {}
@@ -1047,15 +1058,6 @@ const Diagram = function() {
         })
         .call(Simulations.drag(diagram, layer))
         
-      // graphics.nodes
-      //   .append("rect")
-      //   .attr("class", "group-rect11")
-      //   .attr("rx", 15)
-      //   .attr("fill", "red")
-      //   .attr("opacity", 1)
-      //   .style("width", "100px").style("height", "100px")
-
-      //circle for node
       graphics.nodes.append("circle")
         .attr("r", 0)
         .attr("stroke", "grey")
