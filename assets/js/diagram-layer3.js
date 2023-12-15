@@ -467,15 +467,15 @@ const Diagram = function() {
       }
     },
     box({ settings }, containers) {
-      console.log('containers', containers, settings);
-
-      return containers.append("rect")
+      let groupRects = containers.append("rect")
         .attr("class", "group-rect")
         .attr("stroke", "#83bad6")
-        .attr("stroke-width", settings.groupBorderWidth)
+        .attr("stroke-width", 10) 
         .attr("rx", 15)
         .attr("fill", "#99d9ea")
-        .attr("opacity", 1)
+        .attr("opacity", 1);
+
+        return groupRects;
     },
     closeButton(diagram, containers) {
       return containers.append("image")
@@ -492,7 +492,8 @@ const Diagram = function() {
 
       graphics.groupContainers = dom.groupsContainer.selectAll(".group")
         .data(groups.map(({ id }) => id))
-        .enter()
+        .enter();
+
       graphics.groupRect = this.box(diagram, graphics.groupContainers)
         .call(d3.drag()
           .on("start", (p) => {
@@ -555,9 +556,10 @@ const Diagram = function() {
         })
         
       graphics.groupCloseBtn = this.closeButton(diagram, dom.groupsContainer)
-        .attr("style", "display: none")
+        .attr("style", "display: none");
 
-      this.setup(diagram)
+
+      this.setup(diagram);
     }
   }
 
@@ -758,7 +760,7 @@ const Diagram = function() {
         const { settings } = diagram,
               { nodes, edges, groups } = layer
 
-        return d3.forceSimulation()
+        const simulation = d3.forceSimulation()
           .nodes(nodes)
           .force("x", d3.forceX().strength(0.1)).force("y", d3.forceY().strength(0.1))
           .force("link", d3.forceLink(edges).id(d => d.name).strength(link => {
@@ -777,8 +779,28 @@ const Diagram = function() {
           .alpha(1)
           .alphaTarget(0)
           .on("tick", function() {
-            Graphics.update(layer)
-          })
+            Graphics.update(layer);
+
+            diagram.graphics.groupRect._groups[0].forEach(function (d, index) {
+              let rectBBox = d.getBBox();
+              let rectX = rectBBox.x + rectBBox.width / 2;
+              let rectY = rectBBox.y + rectBBox.height / 2;
+              let parentContainer = d3.select(d.parentNode);
+              let image = 'image_' + index
+              parentContainer.selectAll('.' + image).remove();
+
+              parentContainer
+                .append('image')
+                .attr("class", image)
+                .attr("xlink:href", 'assets/Graphics/Router.png')
+                .attr("x", rectX - 50) 
+                .attr("y", rectY - 50)
+                .attr("width", 100)
+                .attr("height", 100);
+            });
+          });
+
+        return simulation;
       },
     },
     groups: {
@@ -985,6 +1007,7 @@ const Diagram = function() {
       graphics.nodes = layer.dom.layerContainer.selectAll(".node")
         .data(nodes)
         .enter().append("g")
+        .attr('class', 'tes')
         .on("mouseover", function(d) {
           // only show tooltips for the current layer
           const parts = []
@@ -1024,10 +1047,16 @@ const Diagram = function() {
         })
         .call(Simulations.drag(diagram, layer))
         
+      // graphics.nodes
+      //   .append("rect")
+      //   .attr("class", "group-rect11")
+      //   .attr("rx", 15)
+      //   .attr("fill", "red")
+      //   .attr("opacity", 1)
+      //   .style("width", "100px").style("height", "100px")
 
       //circle for node
       graphics.nodes.append("circle")
-        .attr('class', '1231')
         .attr("r", 0)
         .attr("stroke", "grey")
         .attr("stroke-width", "1px")
@@ -2873,6 +2902,8 @@ const Diagram = function() {
         dom.spinner.remove()
       },
     },
+
+    
     create(diagram, container) {
       const dom = diagram.dom = {}
 
@@ -2919,14 +2950,14 @@ const Diagram = function() {
 
       [
         "nodes",
-        "groups",
         "edges",
         "graphics",
         "simulations",
         "autocompleteItems",
         "focusedGroup",
         "transform",
-        "zoomBehavior"
+        "zoomBehavior",
+        "groups",
       ].forEach(key => {
         Object.defineProperty(diagram, key, {
           get() {
@@ -2937,7 +2968,7 @@ const Diagram = function() {
           }
         })
       });
-      ["svg", "groupsContainer", "layerContainer"].forEach(key => {
+      ["svg", "layerContainer", "groupsContainer"].forEach(key => {
         Object.defineProperty(diagram.dom, key, {
           get() {
             return layers[0].dom[key]
@@ -2990,6 +3021,7 @@ const Diagram = function() {
           .style("top", 30)
           .style("z-index", diagram.layers.length + 1)
           .style("opacity", 0)
+
         Grouping.box(diagram, layer.dom.svg)
           .attr("x", 5)
           .attr("y", 5)
@@ -3011,7 +3043,6 @@ const Diagram = function() {
         })
       }
       layer.dom.layerContainer = layer.dom.svg.append("g")
-      layer.dom.groupsContainer = layer.dom.layerContainer.append("g").attr("class", "groups")
       Zoom.init(diagram, layer)
 
       // then we show the loading spinner in case data fetching takes a while
@@ -3027,6 +3058,8 @@ const Diagram = function() {
       Data.process(layer, await data)
 
       Graphics.create(diagram, layer)
+
+      layer.dom.groupsContainer = layer.dom.layerContainer.append("g").attr("class", "groups")
 
       if (!first) {
         Grouping.box(diagram, layer.dom.svg)
@@ -3254,13 +3287,13 @@ const Diagram = function() {
 
     UI.create(diagram, container)
     const layer = await Layers.push("main", diagram, Data.fetch("api/diagramlayer3.json"));
-
+    
     layer.processing = false
     Simulations.init(diagram, layer)
-    Grouping.init(diagram, layer)
     IpAddress.init(diagram, layer)
     Layout.restore(diagram, layer)
     Zoom.restore(diagram, layer)
+    Grouping.init(diagram, layer)
 
     return {
       destroy() { destroy(diagram, this) },
@@ -3268,7 +3301,6 @@ const Diagram = function() {
       doVisioExport: () => doVisioExport(diagram),
       updateSettings: (newSettings) => updateSettings(diagram, newSettings),
       toggleFloatMode: () => toggleFloatMode(diagram),
-      // toggleGrouping: () => Grouping.toggle(diagram),
       toggleIpAddress: () => IpAddress.toggle(diagram),
       toggleToolbar: () => UI.toolbar.toggle(diagram)
     }
