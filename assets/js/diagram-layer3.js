@@ -940,11 +940,11 @@ const Diagram = function() {
         parentContainer
           .append('image')
           .attr("class", image)
-          .attr("xlink:href", 'assets/Graphics/Router.png')
+          .attr("xlink:href", 'assets/Graphics/group.png')
           .attr("x", rectX - 50) 
           .attr("y", rectY - 50)
-          .attr("width", 100)
-          .attr("height", 100);
+          .attr("width", 92)
+          .attr("height", 92);
       });
     },
     create(diagram, layer) {
