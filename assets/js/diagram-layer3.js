@@ -38,17 +38,24 @@ const Diagram = function() {
       return d3.event.shiftKey || d3.event.sourceEvent?.shiftKey
     },
     findNode({ nodes }, value) {
-      return nodes.find(node => node.subnet === value || node.name === value)
+      return nodes.find(node => node.subnet === value || node.name === value || node.ipAddress === value)
     },
     findAndFocus(diagram, value) {
       const node = this.findNode(diagram, value)
 
-      if (node) {
-        Zoom.focusOnNode(diagram, node)
-        return true
-      } else {
-        return false
+      if (!node) {
+        return false;
       }
+
+      Grouping.isLocked = false;
+      if (node.group) { 
+        Grouping.focus(diagram, node.group, false);
+        Zoom.focusOnNode(diagram, node);
+      } else {
+        Zoom.focusOnNode(diagram, node);
+      }
+
+      return true;
     },
     registerDocumentEventListener({ docEventListeners }, type, listener) {
       document.addEventListener(type, listener)
@@ -181,8 +188,8 @@ const Diagram = function() {
       return this.focus(diagram, { x: cx, y: cy, scale, duration })
     },
     scale(layer, by) {
-      let { zoomBehavior, dom, focusedGroup } = layer
-      if (focusedGroup > -1) return
+      let { zoomBehavior, dom } = layer;
+      if (Grouping.isLocked) return
 
       zoomBehavior.scaleBy(dom.svg.transition().duration(200), by)
     },
@@ -198,7 +205,7 @@ const Diagram = function() {
         let delta
 
         // if a group is focused don't zoom
-        if (focusedGroup > -1) return
+        if (Grouping.isLocked) return
 
         if (event.wheelDelta) {
           delta = event.wheelDelta
@@ -264,7 +271,7 @@ const Diagram = function() {
       layer.zoomBehavior = d3.zoom()
         .on("zoom", () => {
           // don't zoom if a group is focused
-          if (layer.focusedGroup > -1 && d3.event.sourceEvent && d3.event.sourceEvent.type === "mousemove") return
+          if (Grouping.isLocked && d3.event.sourceEvent && d3.event.sourceEvent.type === "mousemove") return
 
           layer.transform = d3.event.transform
           dom.layerContainer.attr("transform", d3.event.transform)
@@ -285,6 +292,7 @@ const Diagram = function() {
   }
 
   const Grouping = {
+    isLocked: false,
     fromNodes(diagram, nodes) {
       const group = {}
 
@@ -418,9 +426,12 @@ const Diagram = function() {
           .attr("style", "font-size: 36px; font-family: Arial, Helvetica, sans-serif")
       })
     },
-    focus(diagram, groupId) {
+    focus(diagram, groupId, lock = true) {
+      // 10.30.10.0
       Grouping.unfocus(diagram)
+      // if (lock) {
       diagram.focusedGroup = groupId
+      //}
       const group = diagram.groups[groupId]
 
       const rect = d3.select(diagram.currentLayer.graphics.groupRect._groups[0][groupId]);
@@ -556,14 +567,20 @@ const Diagram = function() {
           })
         )
         .on("click", d => {
-          if (d3.event.shiftKey) this.focus(diagram, d)
+          if (d3.event.shiftKey) {
+            this.isLocked = true;
+            this.focus(diagram, d)
+          }
         })
       graphics.groupTexts = graphics.groupContainers
         .append("text")
         .text(d => groups[d].name)
         .attr("class", "group-text")
         .on("click", d => {
-          if (d3.event.shiftKey) this.focus(diagram, d)
+          if (d3.event.shiftKey) {
+            this.isLocked = true;
+            this.focus(diagram, d);
+          }
         })
         
       graphics.groupCloseBtn = this.closeButton(diagram, dom.groupsContainer)
@@ -2699,8 +2716,8 @@ const Diagram = function() {
     toolbar: {
       searchForm: {
         search(diagram, value) {
+          // 10.200.123.0
           let exactMatch = Utils.findAndFocus(diagram, value)
-
           if (!exactMatch) {
             let items = diagram.dom.searchAutocompleteList.children
             if (items && items.length > 0) {
